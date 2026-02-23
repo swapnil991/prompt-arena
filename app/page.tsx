@@ -4,15 +4,17 @@ import { useState, useRef, useCallback } from "react";
 import Header from "@/components/Header";
 import ModelSelector from "@/components/ModelSelector";
 import ResponseCard, { type CardStatus } from "@/components/ResponseCard";
-import JudgeCard from "@/components/JudgeCard";
+import ResultCard from "@/components/ResultCard";
 import { MODELS, DEFAULT_MODELS, getDisplayName } from "@/lib/models";
 import { callModel, type ChatResponse } from "@/lib/openrouter";
-import { Send, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
+import { Send, ChevronDown, ChevronUp, Settings2, Scale, Blend } from "lucide-react";
 
-const JUDGE_MODELS = [
-  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini ($0.15/M — reliable)" },
+type PostMode = "judge" | "combine";
+
+const EVAL_MODELS = [
+  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini ($0.15/M)" },
   { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash ($0.15/M)" },
-  { id: "none", label: "No judge" },
+  { id: "anthropic/claude-3.5-haiku", label: "Claude 3.5 Haiku ($0.80/M)" },
 ];
 
 export default function Home() {
@@ -25,13 +27,14 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [maxTokens, setMaxTokens] = useState(1024);
   const [temperature, setTemperature] = useState(0.7);
-  const [judgeModelId, setJudgeModelId] = useState(JUDGE_MODELS[0].id);
+  const [evalModelId, setEvalModelId] = useState(EVAL_MODELS[0].id);
+  const [postMode, setPostMode] = useState<PostMode>("judge");
 
   // Response state
   const [statuses, setStatuses] = useState<Record<string, CardStatus>>({});
   const [responses, setResponses] = useState<Record<string, ChatResponse>>({});
-  const [judgeVerdict, setJudgeVerdict] = useState<string | null>(null);
-  const [judgeLoading, setJudgeLoading] = useState(false);
+  const [resultText, setResultText] = useState<string | null>(null);
+  const [resultLoading, setResultLoading] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -65,8 +68,8 @@ export default function Home() {
 
     const models = [...selectedModels];
     setIsRunning(true);
-    setJudgeVerdict(null);
-    setJudgeLoading(false);
+    setResultText(null);
+    setResultLoading(false);
     setElapsed(0);
 
     // Init statuses
@@ -95,7 +98,6 @@ export default function Home() {
           temperature
         );
         results[modelId] = result;
-        // Update incrementally
         setResponses((prev) => ({ ...prev, [modelId]: result }));
         setStatuses((prev) => ({
           ...prev,
@@ -104,10 +106,10 @@ export default function Home() {
       })
     );
 
-    // Judge
+    // Post-processing: Judge or Combine
     const successModels = Object.entries(results).filter(([, v]) => v.text);
-    if (judgeModelId !== "none" && successModels.length >= 2) {
-      setJudgeLoading(true);
+    if (successModels.length >= 2) {
+      setResultLoading(true);
       try {
         const parts = successModels
           .map(([id, v], i) => {
@@ -116,21 +118,26 @@ export default function Home() {
           })
           .join("\n\n");
 
-        const judgePrompt = `You are an impartial AI response evaluator. Compare these responses to the prompt below and pick the best one. Be concise (3-4 sentences max).\n\nOriginal Prompt: ${prompt.trim()}\n\n${parts}\n\nEvaluate on: accuracy, helpfulness, clarity. Declare a WINNER and briefly explain why.`;
+        let evalPrompt: string;
+        if (postMode === "judge") {
+          evalPrompt = `You are an impartial AI response evaluator. Compare these responses to the prompt below and pick the best one. Be concise (3-4 sentences max).\n\nOriginal Prompt: ${prompt.trim()}\n\n${parts}\n\nEvaluate on: accuracy, helpfulness, clarity. Declare a WINNER and briefly explain why.`;
+        } else {
+          evalPrompt = `You are an expert synthesizer. You have received multiple AI responses to the same prompt. Your job is to combine the best parts of all responses into one single, comprehensive, well-structured answer. Take the strongest points from each, eliminate redundancy, and produce the ideal response.\n\nOriginal Prompt: ${prompt.trim()}\n\n${parts}\n\nNow write the best combined response. Do not mention the individual models or that you are combining responses — just deliver the ideal answer directly.`;
+        }
 
-        const judgeResult = await callModel(judgeModelId, judgePrompt, 512, 0.2);
-        setJudgeVerdict(judgeResult.text || judgeResult.error || "Judge failed");
+        const evalResult = await callModel(evalModelId, evalPrompt, 2048, 0.3);
+        setResultText(evalResult.text || evalResult.error || "Evaluation failed");
       } catch {
-        setJudgeVerdict("Judge failed to respond.");
+        setResultText("Evaluation failed to respond.");
       }
-      setJudgeLoading(false);
+      setResultLoading(false);
     }
 
     // Done
     if (timerRef.current) clearInterval(timerRef.current);
     setElapsed(Date.now() - start);
     setIsRunning(false);
-  }, [prompt, selectedModels, maxTokens, temperature, judgeModelId]);
+  }, [prompt, selectedModels, maxTokens, temperature, evalModelId, postMode]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -147,6 +154,9 @@ export default function Home() {
       : modelCount === 3
       ? "grid-cols-1 md:grid-cols-3"
       : "grid-cols-1 md:grid-cols-2 xl:grid-cols-4";
+
+  const evalModelName =
+    evalModelId.split("/").pop()?.replace(/:free$/, "") || evalModelId;
 
   return (
     <div className="min-h-screen">
@@ -167,6 +177,32 @@ export default function Home() {
             className="w-full rounded-lg border border-[#2d3348] bg-[#12141c] px-4 py-3 text-[15px] text-[#e1e4e8] outline-none transition placeholder:text-[#4a5568] focus:border-[#60a5fa] resize-y"
           />
 
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-1 rounded-lg border border-[#2d3348] bg-[#12141c] p-1 w-fit">
+            <button
+              onClick={() => setPostMode("judge")}
+              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition ${
+                postMode === "judge"
+                  ? "bg-[#4c1d95] text-[#a78bfa]"
+                  : "text-[#64748b] hover:text-[#8b95a5]"
+              }`}
+            >
+              <Scale className="h-3.5 w-3.5" />
+              Judge Best
+            </button>
+            <button
+              onClick={() => setPostMode("combine")}
+              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition ${
+                postMode === "combine"
+                  ? "bg-[#064e3b] text-[#34d399]"
+                  : "text-[#64748b] hover:text-[#8b95a5]"
+              }`}
+            >
+              <Blend className="h-3.5 w-3.5" />
+              Combine All
+            </button>
+          </div>
+
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -182,7 +218,11 @@ export default function Home() {
               onClick={() => setShowModels(!showModels)}
               className="flex items-center gap-1.5 rounded-lg border border-[#2d3348] px-4 py-2.5 text-xs font-medium text-[#8b95a5] transition hover:border-[#4a5568]"
             >
-              {showModels ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              {showModels ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
               Models ({selectedModels.size})
             </button>
 
@@ -216,7 +256,9 @@ export default function Home() {
           {showSettings && (
             <div className="animate-fade-in flex flex-wrap gap-5 rounded-lg border border-[#2d3348] bg-[#12141c] p-4">
               <div>
-                <label className="mb-1 block text-[11px] text-[#64748b]">Max Tokens</label>
+                <label className="mb-1 block text-[11px] text-[#64748b]">
+                  Max Tokens
+                </label>
                 <input
                   type="number"
                   value={maxTokens}
@@ -227,7 +269,9 @@ export default function Home() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] text-[#64748b]">Temperature</label>
+                <label className="mb-1 block text-[11px] text-[#64748b]">
+                  Temperature
+                </label>
                 <input
                   type="number"
                   value={temperature}
@@ -239,15 +283,17 @@ export default function Home() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] text-[#64748b]">Judge Model</label>
+                <label className="mb-1 block text-[11px] text-[#64748b]">
+                  {postMode === "judge" ? "Judge" : "Combiner"} Model
+                </label>
                 <select
-                  value={judgeModelId}
-                  onChange={(e) => setJudgeModelId(e.target.value)}
-                  className="w-48 rounded-md border border-[#2d3348] bg-[#1a1d27] px-3 py-1.5 text-sm text-[#e1e4e8] outline-none focus:border-[#60a5fa]"
+                  value={evalModelId}
+                  onChange={(e) => setEvalModelId(e.target.value)}
+                  className="w-56 rounded-md border border-[#2d3348] bg-[#1a1d27] px-3 py-1.5 text-sm text-[#e1e4e8] outline-none focus:border-[#60a5fa]"
                 >
-                  {JUDGE_MODELS.map((j) => (
-                    <option key={j.id} value={j.id}>
-                      {j.label}
+                  {EVAL_MODELS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
                     </option>
                   ))}
                 </select>
@@ -270,18 +316,18 @@ export default function Home() {
           </div>
         )}
 
-        {/* Judge */}
-        <JudgeCard
-          verdict={judgeVerdict}
-          loading={judgeLoading}
-          judgeModel={judgeModelId}
+        {/* Result: Judge or Combine */}
+        <ResultCard
+          mode={postMode}
+          verdict={resultText}
+          loading={resultLoading}
+          modelName={evalModelName}
         />
 
         {/* Footer */}
         <footer className="py-8 text-center text-xs text-[#4a5568]">
           <p>
-            Prompt Arena — Open source multi-model comparison tool.
-            Powered by{" "}
+            Prompt Arena — Open source multi-model comparison tool. Powered by{" "}
             <a
               href="https://openrouter.ai"
               target="_blank"
