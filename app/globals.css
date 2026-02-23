@@ -1,31 +1,105 @@
 @import "tailwindcss";
 
+/* ── Light theme (default) ── */
 :root {
-  --bg-primary: #0f1117;
-  --bg-card: #1a1d27;
-  --bg-input: #12141c;
-  --border: #2d3348;
-  --text-primary: #e1e4e8;
+  --bg-primary: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-input: #f0f2f7;
+  --bg-header: linear-gradient(to right, #f8f9fc, #eef1f8);
+  --bg-result: linear-gradient(to right, #f0f1ff, #f4f0ff);
+  --border: #e0e4ed;
+  --border-focus: #6366f1;
+  --text-primary: #1a1d2b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-body: #374151;
+  --accent-blue: #6366f1;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --badge-bg: #f1f5f9;
+  --badge-done-bg: #ecfdf5;
+  --badge-done-text: #059669;
+  --badge-error-bg: #fef2f2;
+  --badge-error-text: #dc2626;
+  --badge-loading-bg: #eef2ff;
+  --badge-loading-text: #4f46e5;
+  --badge-waiting-bg: #f1f5f9;
+  --badge-waiting-text: #94a3b8;
+  --chip-selected-bg: #eef2ff;
+  --chip-selected-border: #6366f1;
+  --checkbox-active: #6366f1;
+  --free-bg: #ecfdf5;
+  --free-text: #059669;
+  --toggle-judge-bg: #ede9fe;
+  --toggle-judge-text: #7c3aed;
+  --toggle-combine-bg: #ecfdf5;
+  --toggle-combine-text: #059669;
+  --result-border-judge: #c4b5fd;
+  --result-border-combine: #6ee7b7;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-hover: #94a3b8;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ── Dark theme ── */
+.dark {
+  --bg-primary: #0b0d14;
+  --bg-card: #13151f;
+  --bg-input: #0e101a;
+  --bg-header: linear-gradient(to right, #111327, #0f1a2e);
+  --bg-result: linear-gradient(to right, #15162a, #171a30);
+  --border: #1f2337;
+  --border-focus: #818cf8;
+  --text-primary: #f0f2f5;
   --text-secondary: #8b95a5;
-  --text-muted: #64748b;
-  --accent-blue: #60a5fa;
+  --text-muted: #4b5563;
+  --text-body: #c9d1d9;
+  --accent-blue: #818cf8;
   --accent-purple: #a78bfa;
   --accent-pink: #f472b6;
   --accent-green: #34d399;
   --accent-red: #f87171;
+  --badge-bg: #1e293b;
+  --badge-done-bg: #064e3b;
+  --badge-done-text: #34d399;
+  --badge-error-bg: #3b1320;
+  --badge-error-text: #f87171;
+  --badge-loading-bg: #1e1b4b;
+  --badge-loading-text: #818cf8;
+  --badge-waiting-bg: #1e293b;
+  --badge-waiting-text: #64748b;
+  --chip-selected-bg: #1e1b4b;
+  --chip-selected-border: #818cf8;
+  --checkbox-active: #818cf8;
+  --free-bg: #064e3b;
+  --free-text: #34d399;
+  --toggle-judge-bg: #2e1065;
+  --toggle-judge-text: #a78bfa;
+  --toggle-combine-bg: #064e3b;
+  --toggle-combine-text: #34d399;
+  --result-border-judge: #4c1d95;
+  --result-border-combine: #064e3b;
+  --scrollbar-thumb: #2d3348;
+  --scrollbar-hover: #4a5568;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2d3348; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
 /* Animations */
 @keyframes pulse-glow {
@@ -43,3 +117,11 @@ body {
 .animate-pulse-glow { animation: pulse-glow 1.5s infinite; }
 .animate-spin-fast { animation: spin 0.8s linear infinite; }
 .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+
+/* Transition helper for theme changes */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.2s ease, box-shadow 0.3s ease !important;
+}

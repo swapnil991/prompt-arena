@@ -29,24 +29,34 @@ export default function ResponseCard({ modelId, status, response }: Props) {
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-xl border transition-all animate-fade-in ${
-        status === "done"
-          ? "border-[#2d3348] bg-[#1a1d27]"
-          : status === "error"
-          ? "border-[#3b1320] bg-[#1a1d27]"
-          : "border-[#2d3348] bg-[#1a1d27]"
-      }`}
+      className="flex flex-col overflow-hidden rounded-xl transition-all animate-fade-in"
+      style={{
+        background: "var(--bg-card)",
+        border: `1px solid ${status === "error" ? "var(--accent-red)" : "var(--border)"}`,
+        boxShadow: "var(--shadow)",
+      }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#2d3348] px-4 py-3">
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
         <div className="flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 rounded-full shrink-0"
             style={{ background: color }}
           />
-          <span className="text-sm font-semibold text-[#e1e4e8]">{name}</span>
+          <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+            {name}
+          </span>
           {model?.free && (
-            <span className="rounded-full bg-[#064e3b] px-1.5 py-0.5 text-[9px] font-bold text-[#34d399]">
+            <span
+              className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+              style={{
+                background: "var(--free-bg)",
+                color: "var(--free-text)",
+              }}
+            >
               FREE
             </span>
           )}
@@ -56,22 +66,38 @@ export default function ResponseCard({ modelId, status, response }: Props) {
 
       {/* Body */}
       <div
-        className={`flex-1 overflow-y-auto p-4 text-[13.5px] leading-relaxed ${
-          status === "idle"
-            ? "flex min-h-[140px] items-center justify-center text-[#4a5568] italic"
-            : status === "loading"
-            ? "flex min-h-[140px] items-center justify-center"
-            : status === "error"
-            ? "text-[#f87171]"
-            : "text-[#c9d1d9]"
-        }`}
-        style={{ maxHeight: 500, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+        className="flex-1 overflow-y-auto p-4 text-[13.5px] leading-relaxed"
+        style={{
+          maxHeight: 500,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          color:
+            status === "idle"
+              ? "var(--text-muted)"
+              : status === "error"
+              ? "var(--accent-red)"
+              : "var(--text-body)",
+          fontStyle: status === "idle" ? "italic" : "normal",
+          ...(status === "loading" || status === "idle"
+            ? {
+                display: "flex",
+                minHeight: 140,
+                alignItems: "center",
+                justifyContent: "center",
+              }
+            : {}),
+        }}
       >
         {status === "idle" && "Awaiting prompt..."}
         {status === "loading" && (
           <div className="flex flex-col items-center gap-2">
-            <div className="h-5 w-5 rounded-full border-2 border-[#60a5fa] border-t-transparent animate-spin-fast" />
-            <span className="text-xs text-[#64748b]">Thinking...</span>
+            <div
+              className="h-5 w-5 rounded-full border-2 border-t-transparent animate-spin-fast"
+              style={{ borderColor: "var(--accent-blue)", borderTopColor: "transparent" }}
+            />
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Thinking...
+            </span>
           </div>
         )}
         {status === "done" && response?.text}
@@ -80,8 +106,11 @@ export default function ResponseCard({ modelId, status, response }: Props) {
 
       {/* Footer */}
       {(status === "done" || status === "error") && (
-        <div className="flex items-center justify-between border-t border-[#2d3348] px-4 py-2">
-          <div className="flex items-center gap-3 text-[11px] text-[#64748b]">
+        <div
+          className="flex items-center justify-between px-4 py-2"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
+          <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--text-muted)" }}>
             {response?.tokens && (
               <span className="flex items-center gap-1">
                 <Zap className="h-3 w-3" />
@@ -98,7 +127,11 @@ export default function ResponseCard({ modelId, status, response }: Props) {
           {response?.text && (
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1 rounded border border-[#2d3348] px-2 py-0.5 text-[11px] text-[#8b95a5] transition hover:border-[#60a5fa] hover:text-[#60a5fa]"
+              className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition hover:opacity-80"
+              style={{
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
             >
               {copied ? (
                 <>
@@ -118,30 +151,21 @@ export default function ResponseCard({ modelId, status, response }: Props) {
 }
 
 function StatusBadge({ status }: { status: CardStatus }) {
-  switch (status) {
-    case "idle":
-      return (
-        <span className="rounded-full bg-[#1e293b] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
-          Waiting
-        </span>
-      );
-    case "loading":
-      return (
-        <span className="rounded-full bg-[#1e3a5f] px-2 py-0.5 text-[11px] font-medium text-[#60a5fa] animate-pulse-glow">
-          Thinking...
-        </span>
-      );
-    case "done":
-      return (
-        <span className="rounded-full bg-[#064e3b] px-2 py-0.5 text-[11px] font-medium text-[#34d399]">
-          Done
-        </span>
-      );
-    case "error":
-      return (
-        <span className="rounded-full bg-[#3b1320] px-2 py-0.5 text-[11px] font-medium text-[#f87171]">
-          Error
-        </span>
-      );
-  }
+  const styles: Record<CardStatus, { bg: string; color: string; label: string }> = {
+    idle: { bg: "var(--badge-waiting-bg)", color: "var(--badge-waiting-text)", label: "Waiting" },
+    loading: { bg: "var(--badge-loading-bg)", color: "var(--badge-loading-text)", label: "Thinking..." },
+    done: { bg: "var(--badge-done-bg)", color: "var(--badge-done-text)", label: "Done" },
+    error: { bg: "var(--badge-error-bg)", color: "var(--badge-error-text)", label: "Error" },
+  };
+  const s = styles[status];
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+        status === "loading" ? "animate-pulse-glow" : ""
+      }`}
+      style={{ background: s.bg, color: s.color }}
+    >
+      {s.label}
+    </span>
+  );
 }

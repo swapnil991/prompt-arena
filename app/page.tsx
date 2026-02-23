@@ -18,7 +18,6 @@ const EVAL_MODELS = [
 ];
 
 export default function Home() {
-  // State
   const [prompt, setPrompt] = useState("");
   const [selectedModels, setSelectedModels] = useState<Set<string>>(
     new Set(DEFAULT_MODELS)
@@ -30,7 +29,6 @@ export default function Home() {
   const [evalModelId, setEvalModelId] = useState(EVAL_MODELS[0].id);
   const [postMode, setPostMode] = useState<PostMode>("judge");
 
-  // Response state
   const [statuses, setStatuses] = useState<Record<string, CardStatus>>({});
   const [responses, setResponses] = useState<Record<string, ChatResponse>>({});
   const [resultText, setResultText] = useState<string | null>(null);
@@ -39,7 +37,6 @@ export default function Home() {
   const [elapsed, setElapsed] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Handlers
   const toggleModel = useCallback((id: string) => {
     setSelectedModels((prev) => {
       const next = new Set(prev);
@@ -72,7 +69,6 @@ export default function Home() {
     setResultLoading(false);
     setElapsed(0);
 
-    // Init statuses
     const initStatuses: Record<string, CardStatus> = {};
     const initResponses: Record<string, ChatResponse> = {};
     models.forEach((id) => {
@@ -81,22 +77,15 @@ export default function Home() {
     setStatuses(initStatuses);
     setResponses(initResponses);
 
-    // Timer
     const start = Date.now();
     timerRef.current = setInterval(() => {
       setElapsed(Date.now() - start);
     }, 100);
 
-    // Fire all in parallel
     const results: Record<string, ChatResponse> = {};
     await Promise.all(
       models.map(async (modelId) => {
-        const result = await callModel(
-          modelId,
-          prompt.trim(),
-          maxTokens,
-          temperature
-        );
+        const result = await callModel(modelId, prompt.trim(), maxTokens, temperature);
         results[modelId] = result;
         setResponses((prev) => ({ ...prev, [modelId]: result }));
         setStatuses((prev) => ({
@@ -106,7 +95,6 @@ export default function Home() {
       })
     );
 
-    // Post-processing: Judge or Combine
     const successModels = Object.entries(results).filter(([, v]) => v.text);
     if (successModels.length >= 2) {
       setResultLoading(true);
@@ -133,7 +121,6 @@ export default function Home() {
       setResultLoading(false);
     }
 
-    // Done
     if (timerRef.current) clearInterval(timerRef.current);
     setElapsed(Date.now() - start);
     setIsRunning(false);
@@ -146,7 +133,6 @@ export default function Home() {
     }
   };
 
-  // Grid columns
   const modelCount = selectedModels.size;
   const gridCols =
     modelCount <= 2
@@ -164,8 +150,18 @@ export default function Home() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-5 sm:px-6">
         {/* Prompt Input */}
-        <div className="rounded-xl border border-[#2d3348] bg-[#1a1d27] p-5 space-y-4">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[#8b95a5]">
+        <div
+          className="rounded-xl p-5 space-y-4"
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            boxShadow: "var(--shadow)",
+          }}
+        >
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Your Prompt
           </label>
           <textarea
@@ -174,29 +170,40 @@ export default function Home() {
             onKeyDown={handleKeyDown}
             placeholder="Type your prompt... (Enter to send, Shift+Enter for newline)"
             rows={3}
-            className="w-full rounded-lg border border-[#2d3348] bg-[#12141c] px-4 py-3 text-[15px] text-[#e1e4e8] outline-none transition placeholder:text-[#4a5568] focus:border-[#60a5fa] resize-y"
+            className="w-full rounded-lg px-4 py-3 text-[15px] outline-none transition resize-y"
+            style={{
+              background: "var(--bg-input)",
+              border: "1px solid var(--border)",
+              color: "var(--text-primary)",
+            }}
           />
 
           {/* Mode Toggle */}
-          <div className="flex items-center gap-1 rounded-lg border border-[#2d3348] bg-[#12141c] p-1 w-fit">
+          <div
+            className="flex items-center gap-1 rounded-lg p-1 w-fit"
+            style={{
+              background: "var(--bg-input)",
+              border: "1px solid var(--border)",
+            }}
+          >
             <button
               onClick={() => setPostMode("judge")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition ${
-                postMode === "judge"
-                  ? "bg-[#4c1d95] text-[#a78bfa]"
-                  : "text-[#64748b] hover:text-[#8b95a5]"
-              }`}
+              className="flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition"
+              style={{
+                background: postMode === "judge" ? "var(--toggle-judge-bg)" : "transparent",
+                color: postMode === "judge" ? "var(--toggle-judge-text)" : "var(--text-muted)",
+              }}
             >
               <Scale className="h-3.5 w-3.5" />
               Judge Best
             </button>
             <button
               onClick={() => setPostMode("combine")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition ${
-                postMode === "combine"
-                  ? "bg-[#064e3b] text-[#34d399]"
-                  : "text-[#64748b] hover:text-[#8b95a5]"
-              }`}
+              className="flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition"
+              style={{
+                background: postMode === "combine" ? "var(--toggle-combine-bg)" : "transparent",
+                color: postMode === "combine" ? "var(--toggle-combine-text)" : "var(--text-muted)",
+              }}
             >
               <Blend className="h-3.5 w-3.5" />
               Combine All
@@ -208,7 +215,8 @@ export default function Home() {
             <button
               onClick={handleSend}
               disabled={isRunning}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6366f1] to-[#a855f7] px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ boxShadow: "var(--shadow-lg)" }}
             >
               <Send className="h-4 w-4" />
               {isRunning ? "Comparing..." : "Compare Models"}
@@ -216,7 +224,11 @@ export default function Home() {
 
             <button
               onClick={() => setShowModels(!showModels)}
-              className="flex items-center gap-1.5 rounded-lg border border-[#2d3348] px-4 py-2.5 text-xs font-medium text-[#8b95a5] transition hover:border-[#4a5568]"
+              className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-medium transition hover:opacity-80"
+              style={{
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
             >
               {showModels ? (
                 <ChevronUp className="h-3.5 w-3.5" />
@@ -228,14 +240,18 @@ export default function Home() {
 
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="flex items-center gap-1.5 rounded-lg border border-[#2d3348] px-4 py-2.5 text-xs font-medium text-[#8b95a5] transition hover:border-[#4a5568]"
+              className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-medium transition hover:opacity-80"
+              style={{
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
             >
               <Settings2 className="h-3.5 w-3.5" />
               Settings
             </button>
 
             {elapsed !== null && (
-              <span className="ml-auto text-xs text-[#64748b]">
+              <span className="ml-auto text-xs" style={{ color: "var(--text-muted)" }}>
                 {(elapsed / 1000).toFixed(1)}s {isRunning ? "" : "total"}
               </span>
             )}
@@ -243,7 +259,13 @@ export default function Home() {
 
           {/* Model Selector (collapsible) */}
           {showModels && (
-            <div className="animate-fade-in rounded-lg border border-[#2d3348] bg-[#12141c] p-4">
+            <div
+              className="animate-fade-in rounded-lg p-4"
+              style={{
+                background: "var(--bg-input)",
+                border: "1px solid var(--border)",
+              }}
+            >
               <ModelSelector
                 selected={selectedModels}
                 onToggle={toggleModel}
@@ -254,9 +276,15 @@ export default function Home() {
 
           {/* Settings (collapsible) */}
           {showSettings && (
-            <div className="animate-fade-in flex flex-wrap gap-5 rounded-lg border border-[#2d3348] bg-[#12141c] p-4">
+            <div
+              className="animate-fade-in flex flex-wrap gap-5 rounded-lg p-4"
+              style={{
+                background: "var(--bg-input)",
+                border: "1px solid var(--border)",
+              }}
+            >
               <div>
-                <label className="mb-1 block text-[11px] text-[#64748b]">
+                <label className="mb-1 block text-[11px]" style={{ color: "var(--text-muted)" }}>
                   Max Tokens
                 </label>
                 <input
@@ -265,11 +293,16 @@ export default function Home() {
                   onChange={(e) => setMaxTokens(Number(e.target.value))}
                   min={100}
                   max={8192}
-                  className="w-28 rounded-md border border-[#2d3348] bg-[#1a1d27] px-3 py-1.5 text-sm text-[#e1e4e8] outline-none focus:border-[#60a5fa]"
+                  className="w-28 rounded-md px-3 py-1.5 text-sm outline-none"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-primary)",
+                  }}
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] text-[#64748b]">
+                <label className="mb-1 block text-[11px]" style={{ color: "var(--text-muted)" }}>
                   Temperature
                 </label>
                 <input
@@ -279,17 +312,27 @@ export default function Home() {
                   min={0}
                   max={2}
                   step={0.1}
-                  className="w-28 rounded-md border border-[#2d3348] bg-[#1a1d27] px-3 py-1.5 text-sm text-[#e1e4e8] outline-none focus:border-[#60a5fa]"
+                  className="w-28 rounded-md px-3 py-1.5 text-sm outline-none"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-primary)",
+                  }}
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] text-[#64748b]">
+                <label className="mb-1 block text-[11px]" style={{ color: "var(--text-muted)" }}>
                   {postMode === "judge" ? "Judge" : "Combiner"} Model
                 </label>
                 <select
                   value={evalModelId}
                   onChange={(e) => setEvalModelId(e.target.value)}
-                  className="w-56 rounded-md border border-[#2d3348] bg-[#1a1d27] px-3 py-1.5 text-sm text-[#e1e4e8] outline-none focus:border-[#60a5fa]"
+                  className="w-56 rounded-md px-3 py-1.5 text-sm outline-none"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-primary)",
+                  }}
                 >
                   {EVAL_MODELS.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -325,14 +368,15 @@ export default function Home() {
         />
 
         {/* Footer */}
-        <footer className="py-8 text-center text-xs text-[#4a5568]">
+        <footer className="py-8 text-center text-xs" style={{ color: "var(--text-muted)" }}>
           <p>
             Prompt Arena — Open source multi-model comparison tool. Powered by{" "}
             <a
               href="https://openrouter.ai"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#60a5fa] hover:underline"
+              style={{ color: "var(--accent-blue)" }}
+              className="hover:underline"
             >
               OpenRouter
             </a>
