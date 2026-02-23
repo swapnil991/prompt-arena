@@ -11,8 +11,8 @@ import { callOpenRouter, type ChatResponse } from "@/lib/openrouter";
 import { Send, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
 
 const JUDGE_MODELS = [
-  { id: "google/gemini-2.0-flash-exp:free", label: "Gemini Flash (free)" },
-  { id: "meta-llama/llama-3.1-8b-instruct:free", label: "Llama 3.1 8B (free)" },
+  { id: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 (free)" },
+  { id: "google/gemma-3-27b-it:free", label: "Gemma 3 27B (free)" },
   { id: "none", label: "No judge" },
 ];
 
