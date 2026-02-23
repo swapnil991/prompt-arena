@@ -10,8 +10,8 @@ import { callModel, type ChatResponse } from "@/lib/openrouter";
 import { Send, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
 
 const JUDGE_MODELS = [
-  { id: "google/gemma-3-27b-it:free", label: "Gemma 3 27B (free)" },
-  { id: "qwen/qwen3-next-80b-a3b-instruct:free", label: "Qwen 3 Next 80B (free)" },
+  { id: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 (free)" },
+  { id: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick (free)" },
   { id: "none", label: "No judge" },
 ];
 

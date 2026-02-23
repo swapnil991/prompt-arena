@@ -9,15 +9,17 @@ export interface Model {
 }
 
 export const MODELS: Model[] = [
-  // Free models (verified active on OpenRouter — Feb 2026)
-  { id: "google/gemma-3-27b-it:free", name: "Gemma 3 27B", provider: "Google", price: "FREE", color: "#3b82f6", free: true, preset: ["free", "budget"] },
-  { id: "qwen/qwen3-coder:free", name: "Qwen 3 Coder", provider: "Qwen", price: "FREE", color: "#fb923c", free: true, preset: ["free", "budget"] },
-  { id: "qwen/qwen3-next-80b-a3b-instruct:free", name: "Qwen 3 Next 80B", provider: "Qwen", price: "FREE", color: "#fb923c", free: true, preset: ["free", "budget"] },
+  // Free models — verified from openrouter.ai/collections/free-models (Feb 2026)
+  { id: "meta-llama/llama-4-maverick:free", name: "Llama 4 Maverick", provider: "Meta", price: "FREE", color: "#8b5cf6", free: true, preset: ["free", "budget"] },
+  { id: "meta-llama/llama-4-scout:free", name: "Llama 4 Scout", provider: "Meta", price: "FREE", color: "#8b5cf6", free: true, preset: ["free"] },
   { id: "deepseek/deepseek-r1-0528:free", name: "DeepSeek R1", provider: "DeepSeek", price: "FREE", color: "#38bdf8", free: true, preset: ["free", "budget"] },
-  { id: "nvidia/nemotron-3-nano-30b-a3b:free", name: "Nemotron 3 Nano 30B", provider: "NVIDIA", price: "FREE", color: "#76b900", free: true, preset: ["free"] },
-  { id: "stepfun/step-3.5-flash:free", name: "Step 3.5 Flash", provider: "StepFun", price: "FREE", color: "#22d3ee", free: true, preset: ["free"] },
-  { id: "openai/gpt-oss-120b:free", name: "GPT-OSS 120B", provider: "OpenAI", price: "FREE", color: "#10b981", free: true, preset: ["free"] },
-  { id: "z-ai/glm-4.5-air:free", name: "GLM 4.5 Air", provider: "Zhipu AI", price: "FREE", color: "#e879f9", free: true, preset: ["free"] },
+  { id: "moonshotai/kimi-vl-a3b-thinking:free", name: "Kimi-VL Thinking", provider: "Moonshot", price: "FREE", color: "#e879f9", free: true, preset: ["free"] },
+  { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 3.1", provider: "Mistral", price: "FREE", color: "#f472b6", free: true, preset: ["free", "budget"] },
+  { id: "nvidia/llama-3.1-nemotron-nano-8b-v1:free", name: "Nemotron Nano 8B", provider: "NVIDIA", price: "FREE", color: "#76b900", free: true, preset: ["free"] },
+  { id: "qwen/qwen-2.5-vl-3b-instruct:free", name: "Qwen 2.5 VL", provider: "Qwen", price: "FREE", color: "#fb923c", free: true, preset: ["free"] },
+  { id: "deepseek/deepseek-v3-base:free", name: "DeepSeek V3 Base", provider: "DeepSeek", price: "FREE", color: "#38bdf8", free: true, preset: ["free", "budget"] },
+  { id: "openrouter/optimus-alpha", name: "Optimus Alpha", provider: "OpenRouter", price: "FREE", color: "#22d3ee", free: true, preset: ["free"] },
+  { id: "openrouter/quasar-alpha", name: "Quasar Alpha", provider: "OpenRouter", price: "FREE", color: "#22d3ee", free: true, preset: ["free"] },
 
   // Budget paid models
   { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", price: "$0.15/M in", color: "#10b981", free: false, preset: ["budget"] },
