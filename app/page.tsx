@@ -2,12 +2,11 @@
 
 import { useState, useRef, useCallback } from "react";
 import Header from "@/components/Header";
-import ApiKeyInput from "@/components/ApiKeyInput";
 import ModelSelector from "@/components/ModelSelector";
 import ResponseCard, { type CardStatus } from "@/components/ResponseCard";
 import JudgeCard from "@/components/JudgeCard";
-import { MODELS, DEFAULT_MODELS, getModel, getDisplayName } from "@/lib/models";
-import { callOpenRouter, type ChatResponse } from "@/lib/openrouter";
+import { MODELS, DEFAULT_MODELS, getDisplayName } from "@/lib/models";
+import { callModel, type ChatResponse } from "@/lib/openrouter";
 import { Send, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
 
 const JUDGE_MODELS = [
@@ -18,7 +17,6 @@ const JUDGE_MODELS = [
 
 export default function Home() {
   // State
-  const [apiKey, setApiKey] = useState("");
   const [prompt, setPrompt] = useState("");
   const [selectedModels, setSelectedModels] = useState<Set<string>>(
     new Set(DEFAULT_MODELS)
@@ -60,10 +58,6 @@ export default function Home() {
 
   const handleSend = useCallback(async () => {
     if (!prompt.trim()) return;
-    if (!apiKey.trim()) {
-      alert("Please enter your OpenRouter API key above.");
-      return;
-    }
     if (selectedModels.size < 2) {
       alert("Select at least 2 models to compare.");
       return;
@@ -94,8 +88,7 @@ export default function Home() {
     const results: Record<string, ChatResponse> = {};
     await Promise.all(
       models.map(async (modelId) => {
-        const result = await callOpenRouter(
-          apiKey,
+        const result = await callModel(
           modelId,
           prompt.trim(),
           maxTokens,
@@ -125,7 +118,7 @@ export default function Home() {
 
         const judgePrompt = `You are an impartial AI response evaluator. Compare these responses to the prompt below and pick the best one. Be concise (3-4 sentences max).\n\nOriginal Prompt: ${prompt.trim()}\n\n${parts}\n\nEvaluate on: accuracy, helpfulness, clarity. Declare a WINNER and briefly explain why.`;
 
-        const judgeResult = await callOpenRouter(apiKey, judgeModelId, judgePrompt, 512, 0.2);
+        const judgeResult = await callModel(judgeModelId, judgePrompt, 512, 0.2);
         setJudgeVerdict(judgeResult.text || judgeResult.error || "Judge failed");
       } catch {
         setJudgeVerdict("Judge failed to respond.");
@@ -137,7 +130,7 @@ export default function Home() {
     if (timerRef.current) clearInterval(timerRef.current);
     setElapsed(Date.now() - start);
     setIsRunning(false);
-  }, [prompt, apiKey, selectedModels, maxTokens, temperature, judgeModelId]);
+  }, [prompt, selectedModels, maxTokens, temperature, judgeModelId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -160,9 +153,6 @@ export default function Home() {
       <Header />
 
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-5 sm:px-6">
-        {/* API Key */}
-        <ApiKeyInput apiKey={apiKey} onChange={setApiKey} />
-
         {/* Prompt Input */}
         <div className="rounded-xl border border-[#2d3348] bg-[#1a1d27] p-5 space-y-4">
           <label className="block text-xs font-semibold uppercase tracking-wider text-[#8b95a5]">
@@ -300,7 +290,6 @@ export default function Home() {
             >
               OpenRouter
             </a>
-            . Your API key never leaves your browser.
           </p>
         </footer>
       </main>

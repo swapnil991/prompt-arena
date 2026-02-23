@@ -9,8 +9,7 @@ export interface ChatResponse {
   latencyMs: number;
 }
 
-export async function callOpenRouter(
-  apiKey: string,
+export async function callModel(
   model: string,
   prompt: string,
   maxTokens: number,
@@ -19,35 +18,24 @@ export async function callOpenRouter(
   const start = Date.now();
 
   try {
-    const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const resp = await fetch("/api/compare", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": typeof window !== "undefined" ? window.location.href : "https://prompt-arena.vercel.app",
-        "X-Title": "Prompt Arena",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: maxTokens,
-        temperature,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, prompt, maxTokens, temperature }),
     });
 
     const latencyMs = Date.now() - start;
+    const data = await resp.json();
 
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
       return {
         text: null,
-        error: err.error?.message || `HTTP ${resp.status}`,
+        error: data.error || `HTTP ${resp.status}`,
         tokens: null,
         latencyMs,
       };
     }
 
-    const data = await resp.json();
     const text = data.choices?.[0]?.message?.content;
 
     return {
