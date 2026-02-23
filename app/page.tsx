@@ -10,8 +10,8 @@ import { callModel, type ChatResponse } from "@/lib/openrouter";
 import { Send, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
 
 const JUDGE_MODELS = [
-  { id: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 (free)" },
-  { id: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick (free)" },
+  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini ($0.15/M — reliable)" },
+  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash ($0.15/M)" },
   { id: "none", label: "No judge" },
 ];
 
